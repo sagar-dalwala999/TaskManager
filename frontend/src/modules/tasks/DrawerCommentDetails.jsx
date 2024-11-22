@@ -91,6 +91,7 @@ const DrawerCommentDetails = ({
         setLoading(false);
         setData({ text: "", image: null });
         formData.delete("image");
+        await dispatch(fetchComments(taskId)).unwrap();
       }
     } catch (error) {
       console.log("Error adding comment:", error.message);

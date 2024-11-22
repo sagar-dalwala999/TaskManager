@@ -2,7 +2,7 @@
 import { useState } from "react";
 import TaskModal from "./TaskModal";
 import { useDispatch } from "react-redux";
-import { addTask } from "../../redux/slices/tasksSlice";
+import { addTask, fetchTasks } from "../../redux/slices/tasksSlice";
 import { toast } from "react-hot-toast";
 
 const AddTask = ({ setIsModalOpen }) => {
@@ -16,12 +16,12 @@ const AddTask = ({ setIsModalOpen }) => {
     users: [],
   });
 
-  const handleSubmit = () => {
+  const handleSubmit = async() => {
     if (formData.title && formData.description && formData.users.length > 0) {
       // Only send user IDs (not the full object with value/label)
       const userIds = formData.users.map((user) => user.value);
 
-      dispatch(
+      await dispatch(
         addTask({
           ...formData,
           userId: userIds,  // send only the user IDs
@@ -31,10 +31,10 @@ const AddTask = ({ setIsModalOpen }) => {
         .then(() => {
           toast("Task added successfully");
           setIsModalOpen(false);
+          dispatch(fetchTasks({ currentPage: 1, tasksPerPage: 10, userRole: 'user' }));
         })
         .catch((err) => alert("Error adding task: " + err.message));
 
-      console.log(formData); // Verify the form data before sending
     } else {
       toast("Please fill in all required fields");
     }
