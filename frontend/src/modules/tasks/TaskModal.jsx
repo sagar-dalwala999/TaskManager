@@ -88,7 +88,7 @@ const TaskModal = ({
         <div className="flex flex-col gap-4">
           {/* Title */}
           <div>
-            <label className="block font-semibold text-base-content">
+            <label className="block font-semibold text-base-content mb-1">
               Title
             </label>
             <input
@@ -103,7 +103,7 @@ const TaskModal = ({
 
           {/* Description */}
           <div>
-            <label className="block font-semibold text-base-content">
+            <label className="block font-semibold text-base-conten mb-1">
               Description
             </label>
             <textarea
@@ -117,7 +117,7 @@ const TaskModal = ({
 
           {/* Status */}
           <div>
-            <label className="block font-semibold text-base-content">
+            <label className="block font-semibold text-base-content mb-1">
               Status
             </label>
             <select
@@ -134,7 +134,7 @@ const TaskModal = ({
 
           {/* Type */}
           <div>
-            <label className="block font-semibold text-base-content">Type</label>
+            <label className="block font-semibold text-base-content mb-1">Type</label>
             <select
               name="type"
               value={formData?.type}
@@ -148,7 +148,7 @@ const TaskModal = ({
 
           {/* Users */}
           <div>
-            <label className="block font-semibold text-base-content">
+            <label className="block font-semibold text-base-content mb-1">
               Assign Users
             </label>
             <Select

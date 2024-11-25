@@ -3,6 +3,7 @@ import axios from "axios";
 import EditCommentModal from "../comment/EditCommentModal";
 import DeleteCommentModal from "../comment/DeleteCommentModal";
 import toast from "react-hot-toast";
+import { io } from "socket.io-client";
 
 // eslint-disable-next-line react/prop-types
 const DrawerCommentDetails = ({ user, task }) => {
@@ -73,6 +74,27 @@ const DrawerCommentDetails = ({ user, task }) => {
     }
   };
 
+  const [socket, setSocket] = useState(null);
+
+  //* Initialize Socket.IO connection
+  useEffect(() => {
+    const socketInstance = io(import.meta.env.VITE_SOCKET_URL, {
+      withCredentials: true,
+    });
+    setSocket(socketInstance);
+
+    // Listen for notifications
+    socketInstance.on("notification", (notification) => {
+      toast.success(notification.message); // Show notification as a toast
+      console.log("Received notification:", notification);
+    });
+
+    // Cleanup on component unmount
+    return () => {
+      socketInstance.disconnect();
+    };
+  }, []);
+
   // Handle form submission to add a comment
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -100,6 +122,14 @@ const DrawerCommentDetails = ({ user, task }) => {
         setData({ text: "", image: null }); // Clear the input fields
         fetchComments(); // Refresh comments list
         toast.success("Comment added successfully!");
+
+        // eslint-disable-next-line react/prop-types
+        const usersId = task?.userId.filter((id) => id !== user?.data?._id);
+
+        // Emit the task-created event via Socket.IO
+        if (socket) {
+          socket.emit("comment-created", {comment: response.data.data, usersId: usersId});
+        }
       } else {
         toast.error("Failed to add comment.");
       }

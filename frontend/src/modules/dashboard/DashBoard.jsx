@@ -1,13 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Tasks from "../tasks/Tasks";
 import Navigation from "../navigation/Navigation";
 import TasksDrawer from "../taskDrawer/TasksDrawer";
 import axios from "axios";
+import { io } from "socket.io-client";
 
 // eslint-disable-next-line react/prop-types
 const DashBoard = ({ setTheme, theme }) => {
   const [selectedTask, setSelectedTask] = useState(null);
   const [user, setUser] = useState(null);
+  const socketRef = useRef(null); // Ref to store the socket instance
 
   // Fetch logged-in user details
   const fetchLoggedInUser = async () => {
@@ -26,7 +28,18 @@ const DashBoard = ({ setTheme, theme }) => {
       );
 
       if (response.status === 200 && response.data.success) {
-        setUser(response.data); // Store user details
+        const userData = response.data; // Store the user details
+
+        setUser(userData);
+
+        // Emit the 'register' event only after fetching the user
+        if (socketRef.current) {
+          socketRef.current.emit("register", {
+            userId: userData.data._id, // Make sure `id` matches the server-side field
+            userRole: userData.data.role, // Ensure this matches the expected key on the server
+          });
+          console.log("User registered:", userData.id, userData.role);
+        }
       } else {
         console.error("Failed to fetch user data:", response.data.message);
       }
@@ -42,8 +55,33 @@ const DashBoard = ({ setTheme, theme }) => {
   };
 
   useEffect(() => {
-    fetchLoggedInUser();
-  }, []);
+    fetchLoggedInUser(); // Fetch the logged-in user when the component mounts
+  }, []); // Empty dependency array ensures this runs only once
+
+  useEffect(() => {
+    // Initialize socket connection
+    socketRef.current = io("http://localhost:3000", {
+      withCredentials: true, // Ensure credentials are sent with each request
+    });
+
+    // Listen for socket connection and registration
+    socketRef.current.on("connect", () => {
+      console.log("Connected to the server:", socketRef.current.id);
+    });
+
+    socketRef.current.on("register", (data) => {
+      console.log("User registered:", data);
+      // Handle any other necessary actions after registration, e.g. notifications
+    });
+
+    // Cleanup socket connection on component unmount
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        console.log("Socket disconnected");
+      }
+    };
+  }, []); // Empty dependency array ensures this runs only once
 
   const openDrawer = (task) => setSelectedTask(task);
 
@@ -63,11 +101,7 @@ const DashBoard = ({ setTheme, theme }) => {
 
       {/* Task Details Drawer */}
       {selectedTask && (
-        <TasksDrawer
-          task={selectedTask}
-          user={user}
-          closeDrawer={closeDrawer}
-        />
+        <TasksDrawer task={selectedTask} user={user} closeDrawer={closeDrawer} />
       )}
     </div>
   );

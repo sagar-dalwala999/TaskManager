@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TaskModal from "./TaskModal";
 import { toast } from "react-hot-toast";
 import axios from "axios";
+import { io } from "socket.io-client";
 
 // eslint-disable-next-line react/prop-types
 const AddTask = ({ setIsModalOpen, onAddTask }) => {
@@ -12,6 +13,26 @@ const AddTask = ({ setIsModalOpen, onAddTask }) => {
     type: "Normal",
     users: [],
   });
+  const [socket, setSocket] = useState(null);
+
+  // Initialize Socket.IO connection
+  useEffect(() => {
+    const socketInstance = io(import.meta.env.VITE_SOCKET_URL, {
+      withCredentials: true,
+    });
+    setSocket(socketInstance);
+
+    // Listen for notifications
+    socketInstance.on("notification", (notification) => {
+      toast.success(notification.message); // Show notification as a toast
+      console.log("Received notification:", notification);
+    });
+
+    // Cleanup on component unmount
+    return () => {
+      socketInstance.disconnect();
+    };
+  }, []);
 
   const handleSubmit = async () => {
     const { title, description, users } = formData;
@@ -41,15 +62,23 @@ const AddTask = ({ setIsModalOpen, onAddTask }) => {
 
       if (response.status === 200) {
         toast.success("Task added successfully");
-        onAddTask(response.data.data); // Callback to update the task list
-        setIsModalOpen(false); // Close the modal after adding the task
+
+        // Emit the task-created event via Socket.IO
+        if (socket) {
+          socket.emit("task-created", response.data.data);
+        }
+
+        // Callback to update the task list
+        onAddTask(response.data.data);
+
+        // Close the modal after adding the task
+        setIsModalOpen(false);
       }
     } catch (error) {
-      console.log("Error in adding task: ", error.message);
+      console.error("Error in adding task: ", error.message);
       toast.error("Failed to add task.");
     }
   };
-
 
   return (
     <TaskModal

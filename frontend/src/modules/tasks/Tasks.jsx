@@ -18,8 +18,12 @@ const Tasks = ({ onTaskClick, user }) => {
   // Dynamically compute endpoint based on user role, page, and perPage
   const endpoint = useMemo(() => {
     return userRole === "admin"
-      ? `${import.meta.env.VITE_API_BASE_URL}/tasks/all?perPage=${tasksPerPage}&pageNo=${currentPage}`
-      : `${import.meta.env.VITE_API_BASE_URL}/tasks/users-tasks?perPage=${tasksPerPage}&pageNo=${currentPage}`;
+      ? `${
+          import.meta.env.VITE_API_BASE_URL
+        }/tasks/all?perPage=${tasksPerPage}&pageNo=${currentPage}`
+      : `${
+          import.meta.env.VITE_API_BASE_URL
+        }/tasks/users-tasks?perPage=${tasksPerPage}&pageNo=${currentPage}`;
   }, [userRole, tasksPerPage, currentPage]);
 
   // Fetch all tasks
@@ -123,7 +127,7 @@ const Tasks = ({ onTaskClick, user }) => {
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="table w-full table-auto border-collapse border border-base-300 hidden md:table">
+          <table className="table w-full table-auto border-collapse border border-base-300 hidden sm:table">
             <thead>
               <tr className="bg-base-200">
                 <th>#</th>
@@ -170,7 +174,9 @@ const Tasks = ({ onTaskClick, user }) => {
                         {task.userDetails?.slice(0, 5).map((user) => (
                           <img
                             key={user?._id}
-                            src={`${import.meta.env.VITE_BASE_PIC_URL}${user?.profilePic}`}
+                            src={`${import.meta.env.VITE_BASE_PIC_URL}${
+                              user?.profilePic
+                            }`}
                             alt={user?.username}
                             className="w-8 h-8 object-cover rounded-full"
                           />
@@ -199,64 +205,69 @@ const Tasks = ({ onTaskClick, user }) => {
 
       {/* For Mobile */}
 
-      {
-        loading ? (
-          <div className="flex justify-center items-center py-12 md:hidden lg:hidden">
-            <span className="loading loading-spinner text-primary"></span>
-          </div>
-        ) : (
-          tasks.map((task) => (
-            <div
-              key={task._id}
-              className="bg-base-200 rounded-lg shadow-lg p-4 mb-4 cursor-pointer md:hidden lg:hidden"
-              onClick={() => onTaskClick(task)}
+      {loading ? (
+        <div className="flex justify-center items-center py-12 md:hidden lg:hidden">
+          <span className="loading loading-spinner text-primary"></span>
+        </div>
+      ) : (
+        tasks.map((task) => (
+          <div
+            key={task._id}
+            className="bg-base-200 rounded-lg shadow-lg p-4 mb-4 cursor-pointer md:hidden lg:hidden"
+            onClick={() => onTaskClick(task)}
+          >
+            <p className="text-lg font-bold">{task.title}</p>
+            <p className="text-gray-600">{task.description}</p>
+            <p
+              className={`${
+                task.status === "Completed" &&
+                "line-through badge badge-success badge-outline"
+              } ${
+                task.status === "Pending" && "badge badge-error badge-outline"
+              } ${
+                task.status === "Ongoing" && "badge badge-warning badge-outline"
+              }`}
             >
-              <p className="text-lg font-bold">{task.title}</p>
-              <p className="text-gray-600">{task.description}</p>
-              <p
-                className={`${
-                  task.status === "Completed" && "line-through badge badge-success badge-outline"
-                } ${task.status === "Pending" && "badge badge-error badge-outline"} ${
-                  task.status === "Ongoing" && "badge badge-warning badge-outline"
-                }`}
-              >
-                {task.status}
-              </p>
-              <p
-                className={`${task.type === "Important" && "badge badge-info badge-outline mx-2"} ${
-                  task.type === "Normal" &&
-                  "badge badge-outline mx-2 text-gray-900 dark:text-gray-400"
-                } mb-2`}
-              >
-                {task.type}
-              </p>
-              <div className="flex items-center flex-wrap gap-2">
-                {task.userDetails?.slice(0, 5).map((user) => (
-                  <img
-                    key={user?._id}
-                    src={`${import.meta.env.VITE_BASE_PIC_URL}${user?.profilePic}`}
-                    alt={user?.username}
-                    className="w-8 h-8 object-cover rounded-full mb-2"
-                  />
-                ))}
-                {task.userDetails?.length > 5 && (
-                  <span className="text-sm text-gray-600">
-                    +{task.userDetails.length - 5}
-                  </span>
-                )}
-              </div>
-              <p>
-                {new Date(task.createdAt).toLocaleDateString("en-US", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })}
-              </p>
+              {task.status}
+            </p>
+            <p
+              className={`${
+                task.type === "Important" &&
+                "badge badge-info badge-outline mx-2"
+              } ${
+                task.type === "Normal" &&
+                "badge badge-outline mx-2 text-gray-900 dark:text-gray-400"
+              } mb-2`}
+            >
+              {task.type}
+            </p>
+            <div className="flex items-center flex-wrap gap-2">
+              {task.userDetails?.slice(0, 5).map((user) => (
+                <img
+                  key={user?._id}
+                  src={`${import.meta.env.VITE_BASE_PIC_URL}${
+                    user?.profilePic
+                  }`}
+                  alt={user?.username}
+                  className="w-8 h-8 object-cover rounded-full mb-2"
+                />
+              ))}
+              {task.userDetails?.length > 5 && (
+                <span className="text-sm text-gray-600">
+                  +{task.userDetails.length - 5}
+                </span>
+              )}
             </div>
-          )
-        )
-        )
-      }
+            <p>
+              {new Date(task.createdAt).toLocaleDateString("en-US", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })}
+            </p>
+          </div>
+        ))
+      )}
 
       <TasksPagination
         currentPage={currentPage}

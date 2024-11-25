@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { MdClose } from "react-icons/md";
+
 import DrawerSubTaskDetails from "./DrawerSubTaskDetails";
 import EditSubTask from "../subtask/EditSubTask";
 import DeleteSubTask from "../subtask/DeleteSubTask";
@@ -82,10 +84,10 @@ const TasksDrawer = ({ closeDrawer, task, user }) => {
               {currentView.type === "task" ? "Task Details" : "Subtask Details"}
             </h3>
             <button
-              className="btn btn-ghost btn-sm me-4"
+              className="btn btn-ghost btn-sm"
               onClick={handleCloseDrawer}
             >
-              Close
+              <MdClose size={20} />
             </button>
           </div>
 

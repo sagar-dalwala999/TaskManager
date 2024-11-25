@@ -9,10 +9,10 @@ const TasksPagination = ({ currentPage, setCurrentPage, totalPages }) => {
   return (
     <>
       {currentPage >= 1 && (
-        <div className="flex justify-end mt-4">
+        <div className={`flex justify-end mt-4 ${totalPages === 1 && "hidden"}`}>
           <div className="btn-group">
             <button
-              className="btn btn-outline btn-sm"
+              className={`btn btn-outline btn-sm me-1`}
               disabled={currentPage === 1}
               onClick={() => currentPage > 1 && setCurrentPage(currentPage - 1)}
             >
@@ -20,7 +20,7 @@ const TasksPagination = ({ currentPage, setCurrentPage, totalPages }) => {
             </button>
             <button className="btn btn-active btn-sm">{currentPage}</button>
             <button
-              className="btn btn-outline btn-sm"
+              className="btn btn-outline btn-sm ms-1"
               disabled={currentPage === totalPages}
               onClick={() =>
                 currentPage < totalPages && setCurrentPage(currentPage + 1)
