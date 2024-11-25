@@ -52,6 +52,10 @@ createAdmin();
 
 //* Socket.io setup:
 const server = http.createServer(app);
+
+//! set the notifications to notification in all the funcation except the FETCH ALL NOTIFICATION
+//! AND ALSO CHECK THE NAVIGATION AND NOTIFICATION COMPONENT & 
+//! All the component on the frontend side where i have use socket.io-client
 const io = new Server(server, {
   cors: {
     origin: "http://localhost:5000",
