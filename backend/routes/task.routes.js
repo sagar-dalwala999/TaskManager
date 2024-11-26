@@ -9,6 +9,7 @@ import {
   editTask,
   getAllSubtasks,
   getAllTasks,
+  getPopulatedTasks,
   getSingleSubtask,
   getSingleTask,
   getUserTasks,
@@ -34,5 +35,7 @@ router.get("/subtasks/:id", authMiddleware, getAllSubtasks);
 router.get("/subtask/:id", authMiddleware, getSingleSubtask);
 // router.delete("/delete/subtask/:id", authMiddleware, deleteSubtask);
 // router.patch("/edit/subtask/:id", authMiddleware, editSubtask);
+
+router.get("/populate/:id", getPopulatedTasks);
 
 export default router;

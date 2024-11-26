@@ -9,8 +9,8 @@ export const customStyles = {
     "&:hover": {
       borderColor: "var(--tw-select-border)", // Border on hover
     },
-    minHeight: "45px",
-    height: "30px",
+    // minHeight: "45px",
+    // height: "45px",
   }),
   menu: (base) => ({
     ...base,
@@ -18,7 +18,7 @@ export const customStyles = {
     border: "1px solid var(--tw-select-border)", // Dropdown menu border
     borderRadius: "0.5rem",
     zIndex: 999,
-    overflow: "hidden",
+    overflow: "auto",
   }),
   option: (base, state) => ({
     ...base,
@@ -31,13 +31,14 @@ export const customStyles = {
     "&:active": {
       backgroundColor: "var(--tw-select-hover-bg)", // Active option background
     },
+
   }),
   multiValue: (base) => ({
     ...base,
     backgroundColor: "var(--tw-select-hover-bg)", // Background for selected items
     color: "var(--tw-select-hover-text)", // Text color for selected items
     borderRadius: "0.25rem",
-    padding: "0.2rem 0.4rem",
+    padding: "0.1rem 0.4rem",
   }),
   multiValueLabel: (base) => ({
     ...base,

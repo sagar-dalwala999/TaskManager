@@ -168,6 +168,24 @@ export const getUserTasks = async (req, res) => {
   }
 };
 
+export const getPopulatedTasks = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return errorResponse(res, 404, false, "Tasks not found.");
+    }
+
+    const tasks = await Task.find({
+      _id: id,
+    }).populate("userId");
+
+    return handleResponse(res, 200, true, "Tasks fetched successfully.", tasks);
+  } catch (error) {
+    return errorResponse(res, 500, false, error.message);
+  }
+};
+
 // SubTasks Controller:
 
 export const createSubtask = async (req, res) => {
@@ -194,7 +212,13 @@ export const createSubtask = async (req, res) => {
       subTasksId,
     });
 
-    return handleResponse(res, 200, true, "Sub Task created successfully.", subtask);
+    return handleResponse(
+      res,
+      200,
+      true,
+      "Sub Task created successfully.",
+      subtask
+    );
   } catch (error) {
     return errorResponse(res, 500, false, error.message);
   }

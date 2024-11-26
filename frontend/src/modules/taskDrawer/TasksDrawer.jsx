@@ -12,6 +12,7 @@ import EditTask from "../tasks/EditTask";
 import DeleteTask from "../tasks/DeleteTask";
 import AddSubTask from "../subtask/AddSubTask";
 
+
 // eslint-disable-next-line react/prop-types
 const TasksDrawer = ({ closeDrawer, task, user }) => {
   //* user role
@@ -98,6 +99,7 @@ const TasksDrawer = ({ closeDrawer, task, user }) => {
                   setIsDeleteModalOpen={setIsDeleteModalOpen}
                   userRole={userRole}
                 />
+
                 <DrawerSubTaskDetails
                   onSubTaskClick={openSubTask}
                   setIsSubTaskModalOpen={setIsSubTaskModalOpen}

@@ -4,6 +4,7 @@ import DeleteCommentModal from "../comment/DeleteCommentModal";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 import { FaPlus } from "react-icons/fa6";
+import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
 
 // eslint-disable-next-line react/prop-types
 const DrawerCommentDetails = ({ user, task }) => {
@@ -15,6 +16,8 @@ const DrawerCommentDetails = ({ user, task }) => {
   const [editingCommentId, setEditingCommentId] = useState(null); // Track the comment being edited
   const [editFormData, setEditFormData] = useState("");
   const [socket, setSocket] = useState(null);
+
+  const [isExpanded, setIsExpanded] = useState(true); // State for dropdown toggle
 
   const [data, setData] = useState({ text: "", image: null });
   const [loading, setLoading] = useState(false);
@@ -107,7 +110,11 @@ const DrawerCommentDetails = ({ user, task }) => {
   //* Handle form submission to add a comment
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!data.text.trim()) return; // Don't allow empty comments
+    // if (!data.text.trim()) return; // Don't allow empty comments
+
+    if (!data.text.trim() && !data.image) {
+      return;
+    }
 
     const formData = new FormData();
     formData.append("text", data.text);
@@ -314,10 +321,24 @@ const DrawerCommentDetails = ({ user, task }) => {
 
   return (
     <div className="mt-4 me-4">
-      <h3 className="text-md font-semibold mb-2">Comments</h3>
-      <div className="bg-base-100 p-4 rounded-lg shadow max-h-40 overflow-y-auto space-y-4">
-        {renderComments()}
+      <div onClick={() => setIsExpanded(!isExpanded)}>
+        <h3
+          className="flex items-center cursor-pointer text-md font-semibold mb-2 tooltip tooltip-left"
+          data-tip="Comments"
+        >
+          {isExpanded ? (
+            <IoMdArrowDropup className="w-6 h-6" />
+          ) : (
+            <IoMdArrowDropdown className="w-6 h-6" />
+          )}
+          Comments
+        </h3>
       </div>
+      {isExpanded && (
+        <div className="bg-base-100 p-4 rounded-lg shadow max-h-40 overflow-y-auto space-y-4">
+          {renderComments()}
+        </div>
+      )}
 
       <div className="mt-4">
         <form encType="multipart/form-data" onSubmit={handleSubmit}>

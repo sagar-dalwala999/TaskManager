@@ -107,7 +107,7 @@ const Tasks = ({ onTaskClick, user }) => {
   };
 
   return (
-    <div className="flex flex-col w-full px-4 py-6">
+    <div className="flex flex-col w-full px-3">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">Tasks</h2>
         {userRole === "admin" && (
@@ -143,7 +143,7 @@ const Tasks = ({ onTaskClick, user }) => {
               {tasks.map((task, index) => (
                 <tr
                   key={task._id}
-                  className="hover:bg-base-100 cursor-pointer"
+                  className="hover:bg-base-200 cursor-pointer hover:text-primary"
                   onClick={() => onTaskClick(task)}
                 >
                   <th>{index + 1 + (currentPage - 1) * tasksPerPage}</th>

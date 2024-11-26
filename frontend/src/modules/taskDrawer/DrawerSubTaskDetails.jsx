@@ -1,6 +1,7 @@
 /* eslint-disable react/prop-types */
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
 
 const DrawerSubTaskDetails = ({
   onSubTaskClick,
@@ -10,13 +11,11 @@ const DrawerSubTaskDetails = ({
   setSelectedSubTask,
   userRole,
   task,
-  // subtasks,
-  // updateSubtasks,
-  // setSubtasks
 }) => {
   const [subtasks, setSubtasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+  const [isExpanded, setIsExpanded] = useState(true); // State for dropdown toggle
+
   const taskId = task?._id; // Get taskId from the task object
 
   // Fetch subtasks for the given taskId
@@ -24,16 +23,17 @@ const DrawerSubTaskDetails = ({
     if (!taskId) return;
 
     try {
-      const response = await axios.get(`http://localhost:3000/api/v1/tasks/subtasks/${taskId}`, {
-        headers: {
-          Authorization: `${JSON.parse(localStorage.getItem("token"))}`,
-        },
-      });
+      const response = await axios.get(
+        `http://localhost:3000/api/v1/tasks/subtasks/${taskId}`,
+        {
+          headers: {
+            Authorization: `${JSON.parse(localStorage.getItem("token"))}`,
+          },
+        }
+      );
 
       if (response.status === 200 && response.data.success) {
         setSubtasks(response.data.data); // Store the subtasks in the state
-        // updateSubtasks(response.data.data);
-        
       }
     } catch (error) {
       console.error("Error fetching subtasks:", error.message);
@@ -44,7 +44,7 @@ const DrawerSubTaskDetails = ({
 
   useEffect(() => {
     fetchSubtasks(); // Fetch subtasks when the component mounts or taskId changes
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId]);
 
   const renderSubtasks = () => {
@@ -57,7 +57,9 @@ const DrawerSubTaskDetails = ({
     }
 
     if (subtasks.length === 0) {
-      return <p className="text-sm text-gray-500">No subtasks available</p>;
+      return (
+        <p className="text-sm text-gray-500 py-4 ps-4">No subtasks available</p>
+      );
     }
 
     return subtasks.map((subtask, index) => (
@@ -118,22 +120,40 @@ const DrawerSubTaskDetails = ({
   return (
     <div className="bg-base-100 p-4 rounded-lg shadow me-4">
       {/* Header Section */}
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="text-md font-semibold">Subtasks</h3>
+      <div
+        className="flex justify-between items-center mb-2 cursor-pointer"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <h3
+          className="text-md flex items-center cursor-pointer font-semibold tooltip tooltip-left"
+          data-tip="Subtasks Details"
+        >
+          {isExpanded ? (
+            <IoMdArrowDropup className="w-6 h-6" />
+          ) : (
+            <IoMdArrowDropdown className="w-6 h-6" />
+          )}
+          Subtasks
+        </h3>
         {userRole === "admin" && (
           <button
             className="btn btn-primary btn-sm"
-            onClick={() => setIsSubTaskModalOpen(true)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsSubTaskModalOpen(true);
+            }}
           >
             Add Subtask
           </button>
         )}
       </div>
 
-      {/* Subtasks List */}
-      <div className="overflow-y-auto pr-3 max-h-60">
-        <ul className="space-y-2">{renderSubtasks()}</ul>
-      </div>
+      {/* Collapsible Subtasks List */}
+      {isExpanded && (
+        <div className="bg-base-200 rounded-lg overflow-y-auto pr-3 max-h-60">
+          <ul className="space-y-2">{renderSubtasks()}</ul>
+        </div>
+      )}
     </div>
   );
 };
