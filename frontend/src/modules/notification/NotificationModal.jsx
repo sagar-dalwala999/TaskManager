@@ -23,10 +23,10 @@ const NotificationModal = ({ notifications, onClose, handleMarkAsRead }) => {
               >
                 <span className="text-md">{notif.message}</span>
                 <button
-                  className="btn btn-xs btn-ghost btn-circle w-9 h-9 flex items-center justify-center"
+                  className="btn btn-md btn-ghost btn-square flex items-center justify-center"
                   onClick={() => handleMarkAsRead(notifications[index]._id)}
                 >
-                  <IoArchiveOutline className="w-5 h-5 text-white" />
+                  <IoArchiveOutline className="w-5 h-5 text-error" />
                 </button>
               </li>
             ))}

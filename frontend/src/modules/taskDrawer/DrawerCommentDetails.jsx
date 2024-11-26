@@ -1,30 +1,41 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import EditCommentModal from "../comment/EditCommentModal";
 import DeleteCommentModal from "../comment/DeleteCommentModal";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
+import { FaPlus } from "react-icons/fa6";
 
 // eslint-disable-next-line react/prop-types
 const DrawerCommentDetails = ({ user, task }) => {
-  const [isEditCommentModalOpen, setIsEditCommentModalOpen] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [users, setUsers] = useState({}); // Track users' details by userId
   const [isDeleteCommentModalOpen, setIsDeleteCommentModalOpen] =
     useState(false);
-
-  const [data, setData] = useState({
-    text: "",
-    image: null,
-  });
-
-  const [loading, setLoading] = useState(false);
-  const [comments, setComments] = useState([]);
-
-  const [users, setUsers] = useState({}); // Track users' details by userId
-
+  const [deleteCommentId, setDeleteCommentId] = useState(null); // Separate ID for delete modal
   const [editingCommentId, setEditingCommentId] = useState(null); // Track the comment being edited
+  const [editFormData, setEditFormData] = useState("");
+  const [socket, setSocket] = useState(null);
 
+  const [data, setData] = useState({ text: "", image: null });
+  const [loading, setLoading] = useState(false);
   // eslint-disable-next-line react/prop-types
   const taskId = task?._id;
+
+  // Create a reference to the file input
+  const fileInputRef = useRef();
+
+  const handleIconClick = () => {
+    fileInputRef.current.click(); // Programmatically trigger the file input
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Optional: Validate file type/size here
+      setData({ ...data, image: file });
+      toast.success("Image attached!");
+    }
+  };
 
   // Function to fetch comments
   const fetchComments = async () => {
@@ -74,8 +85,6 @@ const DrawerCommentDetails = ({ user, task }) => {
     }
   };
 
-  const [socket, setSocket] = useState(null);
-
   //* Initialize Socket.IO connection
   useEffect(() => {
     const socketInstance = io(import.meta.env.VITE_SOCKET_URL, {
@@ -95,7 +104,7 @@ const DrawerCommentDetails = ({ user, task }) => {
     };
   }, []);
 
-  // Handle form submission to add a comment
+  //* Handle form submission to add a comment
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!data.text.trim()) return; // Don't allow empty comments
@@ -151,15 +160,40 @@ const DrawerCommentDetails = ({ user, task }) => {
     }
   };
 
-  // Handle opening the edit modal
-  const openEditCommentModal = (commentId) => {
-    setEditingCommentId(commentId); // Set the comment ID for editing
-    setIsEditCommentModalOpen(true); // Open the edit modal
+  //* Edit Comment
+  const handleEditComment = async (e, commentId) => {
+    e.preventDefault();
+    try {
+      const response = await axios.patch(
+        `http://localhost:3000/api/v1/comments/edit/${commentId}`,
+        { text: editFormData },
+        {
+          headers: {
+            Authorization: `${JSON.parse(localStorage.getItem("token"))}`,
+          },
+        }
+      );
+
+      if (response.status === 200 && response.data.success) {
+        toast.success("Comment updated successfully!");
+        setComments((prev) =>
+          prev.map((comment) =>
+            comment._id === commentId
+              ? { ...comment, text: editFormData }
+              : comment
+          )
+        );
+        setEditingCommentId(null);
+      }
+    } catch (error) {
+      toast.error("Error updating the comment.");
+      console.error("Error updating the comment:", error.message);
+    }
   };
 
   // Handle opening the delete modal
   const openDeleteCommentModal = (commentId) => {
-    setEditingCommentId(commentId); // Set the comment ID for deletion
+    setDeleteCommentId(commentId); // Set the comment ID for deletion
     setIsDeleteCommentModalOpen(true); // Open the delete modal
   };
 
@@ -170,11 +204,13 @@ const DrawerCommentDetails = ({ user, task }) => {
 
     return comments.map((comment) => {
       const userDetail = users[comment.userId]; // Get the user details from the `users` state
+      const isEditing = editingCommentId === comment._id;
 
       return (
         <div
           key={comment._id}
-          className="flex items-start space-x-2 bg-base-200 p-2 rounded-lg"
+          className={`flex items-start space-x-2 bg-base-200 p-2 rounded-lg
+            `}
         >
           <img
             src={`http://localhost:3000${userDetail?.profilePic}`}
@@ -184,15 +220,41 @@ const DrawerCommentDetails = ({ user, task }) => {
               e.target.src = "./avatar.svg";
             }}
           />
-          <div className="flex items-center space-x-2">
+          <div className="flex-grow">
             <div>
-              <p className="text-sm font-medium cursor-pointer">
+              <p className="text-sm font-medium">
                 {userDetail?.username}{" "}
                 <span className="text-gray-400 text-xs ml-2">
                   {new Date(comment.createdAt).toLocaleDateString("en-CA")}
                 </span>
               </p>
-              <p className="text-sm">{comment.text}</p>
+
+              {isEditing ? (
+                <div>
+                  <textarea
+                    value={editFormData}
+                    onChange={(e) => setEditFormData(e.target.value)}
+                    className="textarea textarea-bordered input-sm w-full mt-1"
+                  />
+                  <div className="flex justify-end mt-1 space-x-2">
+                    <button
+                      className="btn btn-outline btn-sm"
+                      onClick={() => setEditingCommentId(null)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={(e) => handleEditComment(e, comment._id)}
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm">{comment.text}</p>
+              )}
+
               {/* If image exists, display it */}
               {comment.image && (
                 <img
@@ -208,7 +270,7 @@ const DrawerCommentDetails = ({ user, task }) => {
           </div>
 
           {/*eslint-disable-next-line react/prop-types */}
-          {user?.data?._id === comment.userId && (
+          {!isEditing && user?.data?._id === comment.userId && (
             <div className="dropdown dropdown-end">
               <button tabIndex={0} className="btn btn-ghost btn-xs">
                 ⋮
@@ -218,12 +280,22 @@ const DrawerCommentDetails = ({ user, task }) => {
                 className="dropdown-content menu bg-base-100 rounded-box w-32 shadow z-10"
               >
                 <li>
-                  <button onClick={() => openEditCommentModal(comment._id)}>
+                  <button
+                    onClick={() => {
+                      setEditingCommentId(comment._id);
+                      setEditFormData(comment.text);
+                      console.log(comment._id);
+                    }}
+                  >
                     Edit
                   </button>
                 </li>
                 <li>
-                  <button onClick={() => openDeleteCommentModal(comment._id)}>
+                  <button
+                    onClick={() => {
+                      openDeleteCommentModal(comment._id);
+                    }}
+                  >
                     Delete
                   </button>
                 </li>
@@ -249,42 +321,60 @@ const DrawerCommentDetails = ({ user, task }) => {
 
       <div className="mt-4">
         <form encType="multipart/form-data" onSubmit={handleSubmit}>
-          <textarea
-            name="text"
-            className="textarea textarea-bordered w-full noresize"
-            placeholder="Add a comment..."
-            rows="2"
-            value={data.text}
-            onChange={(e) => setData({ ...data, text: e.target.value })}
-          ></textarea>
-          <input
-            type="file"
-            name="image"
-            className="file-input file-input-bordered file-input-sm w-full my-4"
-            onChange={(e) => setData({ ...data, image: e.target.files[0] })}
-          />
-          <button type="submit" className="btn btn-primary btn-sm mt-2">
-            {loading ? "Posting..." : "Post Comment"}
-          </button>
+          {/* Display the attached image preview */}
+          {data.image && (
+            <div className="mt-2">
+              <p className="text-sm">Attached Image:</p>
+              <img
+                src={URL.createObjectURL(data.image)}
+                alt="Preview"
+                className="w-20 h-20 object-cover rounded-md mt-2"
+              />
+              <p className="text-xs text-gray-500 mt-1 mb-2">
+                {data.image.name}
+              </p>
+            </div>
+          )}
+
+          <div className="flex">
+            <div
+              className="cursor-pointer my-3 flex me-3 btn btn-xs hover:text-white hover:border hover:border-base-300 transform hover:scale-105"
+              onClick={handleIconClick}
+            >
+              <FaPlus size={20} className="text-base-10 h-4 w-4" />
+              {/* <span className="ml-2 text-sm">Add Image</span> */}
+            </div>
+            <input
+              type="file"
+              name="image"
+              ref={fileInputRef} // Attach the ref to the file input
+              className="file-input file-input-bordered file-input-sm w-full my-4 max-w-xs hidden" // Hide the file input
+              onChange={handleFileChange}
+              accept="image/*"
+            />
+
+            <textarea
+              className="textarea textarea-bordered w-full"
+              placeholder="Add a comment..."
+              rows="2"
+              value={data.text}
+              onChange={(e) => setData({ ...data, text: e.target.value })}
+            ></textarea>
+          </div>
+          <div className="flex justify-end">
+            <button type="submit" className="btn btn-primary btn-sm mt-3">
+              {loading ? "Posting..." : "Post Comment"}
+            </button>
+          </div>
         </form>
       </div>
-
-      {/* Edit Comment Modal */}
-      {isEditCommentModalOpen && (
-        <EditCommentModal
-          commentId={editingCommentId} // Pass the selected commentId
-          setComments={setComments} // Pass the setComments function
-          // comments={comments} // Pass the current comments array
-          onClose={() => setIsEditCommentModalOpen(false)} // Close the modal after editing
-        />
-      )}
 
       {/* Delete Comment Modal */}
       {isDeleteCommentModalOpen && (
         <DeleteCommentModal
-          commentId={editingCommentId} // Pass the selected commentId
-          onClose={() => setIsDeleteCommentModalOpen(false)} // Close the modal after deleting
-          setComments={setComments} // Pass the setComments function
+          onClose={() => setIsDeleteCommentModalOpen(false)}
+          commentId={deleteCommentId}
+          setComments={setComments}
         />
       )}
     </div>

@@ -9,6 +9,8 @@ export const customStyles = {
     "&:hover": {
       borderColor: "var(--tw-select-border)", // Border on hover
     },
+    minHeight: "45px",
+    height: "30px",
   }),
   menu: (base) => ({
     ...base,

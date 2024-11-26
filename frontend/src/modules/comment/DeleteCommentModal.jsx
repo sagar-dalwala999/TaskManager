@@ -3,6 +3,7 @@ import axios from "axios";
 
 /* eslint-disable react/prop-types */
 const DeleteCommentModal = ({ onClose, commentId, setComments }) => {
+  console.log(commentId);
   const handleDelete = async () => {
     try {
       const response = await axios.delete(

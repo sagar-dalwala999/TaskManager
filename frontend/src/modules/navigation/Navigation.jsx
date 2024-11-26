@@ -48,19 +48,8 @@ const Navigation = ({ user, setTheme, theme, socket }) => {
 
   const handleNotifications = () => {
     setIsNotificationOpen(true);
-
-    const notificationIds = notifications?.map((notification) => {
-      return notification._id;
-    });
-
-    console.log("notificationIds", notificationIds);
-
-    // socket.emit("fetch-notifications", {
-    //   userId: user.data._id,
-    // });
   };
   const handleMarkAsRead = (notificationId) => {
-    console.log(notificationId);
     socket.emit("read-notification", {
       userId: user.data._id,
       notificationId: notificationId,
@@ -177,7 +166,7 @@ const Navigation = ({ user, setTheme, theme, socket }) => {
               )}
             </div>
           </button>
-         {/* <ul className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
+          {/* <ul className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
           <li className="text-sm">Notifications</li>
          </ul> */}
         </div>

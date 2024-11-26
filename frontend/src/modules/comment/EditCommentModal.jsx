@@ -4,7 +4,7 @@ import axios from "axios";
 
 // eslint-disable-next-line react/prop-types
 const EditCommentModal = ({ onClose, commentId, setComments }) => {
-  const [formData, setFormData] = useState({
+  const [editFormData, setEditFormData] = useState({
     text: "",
     image: null,
   });
@@ -23,7 +23,7 @@ const EditCommentModal = ({ onClose, commentId, setComments }) => {
         );
 
         if (response.status === 200 && response.data.success) {
-          setFormData({
+          setEditFormData({
             text: response.data.data.text,
             image: null, // Assuming image cannot be edited
           });
@@ -37,20 +37,20 @@ const EditCommentModal = ({ onClose, commentId, setComments }) => {
     fetchComment();
   }, [commentId]);
 
-  const handleChange = (e) => {
+  const handleEditChange = (e) => {
     const { name, value, files } = e.target;
-    setFormData({
-      ...formData,
+    setEditFormData({
+      ...editFormData,
       [name]: name === "image" && files?.[0] ? files[0] : value,
     });
   };
 
-  const handleSubmit = async (e) => {
+  const handleEditComment = async (e) => {
     e.preventDefault();
     try {
       const response = await axios.patch(
         `http://localhost:3000/api/v1/comments/edit/${commentId}`,
-        formData,
+        editFormData,
         {
           headers: {
             Authorization: `${JSON.parse(localStorage.getItem("token"))}`,
@@ -63,7 +63,7 @@ const EditCommentModal = ({ onClose, commentId, setComments }) => {
         setComments((prevComments) =>
           prevComments.map((comment) =>
             comment._id === commentId
-              ? { ...comment, text: formData.text } // Update only the edited fields
+              ? { ...comment, text: editFormData.text } // Update only the edited fields
               : comment
           )
         );
@@ -92,22 +92,21 @@ const EditCommentModal = ({ onClose, commentId, setComments }) => {
             className="textarea textarea-bordered w-full"
             placeholder="Edit Comment"
             rows="3"
-            value={formData.text}
-            onChange={handleChange}
+            value={editFormData.text}
+            onChange={handleEditChange}
           ></textarea>
         </div>
-        <div className="flex justify-end mt-6 gap-3">
-          <button className="btn btn-outline" onClick={onClose}>
-            Cancel
-          </button>
-          <button className="btn btn-primary" onClick={handleSubmit}>
-            Save Changes
-          </button>
-        </div>
+          <div className="flex justify-end mt-6 gap-3">
+            <button className="btn btn-outline" onClick={onClose}>
+              Cancel
+            </button>
+            <button className="btn btn-primary" onClick={handleEditComment}>
+              Save Changes
+            </button>
+          </div>
       </div>
     </div>
   );
 };
 
 export default EditCommentModal;
-
