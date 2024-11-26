@@ -1,0 +1,6 @@
+{
+  /* <div
+              className="absolute right-0 mt-2 bg-base-200 shadow-lg rounded-lg p-4 w-80 z-50"
+              onClick={(e) => e.stopPropagation()}
+            ></div> */
+}
