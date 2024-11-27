@@ -9,7 +9,6 @@ import mongoose from "mongoose";
 export const createUser = async (req, res) => {
   try {
     const { username, email, password } = req.body;
-    console.log(req.file);
     const profilePic = `/uploads/${req.file.originalname}`;
 
     if (!username || !email || !password || !profilePic) {
@@ -45,6 +44,61 @@ export const createUser = async (req, res) => {
   } catch (error) {
     errorResponse(res, 500, false, error.message);
     console.log("Error in creating user: ", error.message);
+  }
+};
+
+export const editUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { username, email } = req.body;
+
+    if (!username || !email) {
+      return errorResponse(
+        res,
+        400,
+        false,
+        "Please provide all required fields."
+      );
+    }
+
+    const user = await User.findByIdAndUpdate(
+      id,
+      { username, email },
+      { new: true }
+    );
+
+    return handleResponse(res, 200, true, "User edited successfully.", user);
+  } catch (error) {
+    console.log("Error in editing user: ", error.message);
+    return errorResponse(res, 500, false, error.message);
+  }
+};
+
+export const editProfilePic = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const profilePic = `/uploads/${req.file.originalname}`;
+
+    if (!profilePic) {
+      return errorResponse(
+        res,
+        400,
+        false,
+        "Please provide all required fields."
+      );
+    }
+
+    const user = await User.findByIdAndUpdate(
+      id,
+      { profilePic },
+      { new: true }
+    );
+
+    return handleResponse(res, 200, true, "User edited successfully.", user);
+  } catch (error) {
+    console.log("Error in editing user: ", error.message);
+    return errorResponse(res, 500, false, error.message);
   }
 };
 
@@ -156,9 +210,6 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
-//get multiple users by id
-// import mongoose from "mongoose"; // Import mongoose if not already done
-
 export const getUsersById = async (req, res) => {
   try {
     const { ids } = req.query; // Expecting comma-separated user IDs
@@ -167,12 +218,15 @@ export const getUsersById = async (req, res) => {
     }
 
     // Split and validate IDs
-    const userIds = ids.split(",").map((id) => {
-      if (mongoose.Types.ObjectId.isValid(id)) {
-        return new mongoose.Types.ObjectId(id); // Convert valid IDs to ObjectId
-      }
-      return null; // Mark invalid IDs as null
-    }).filter((id) => id !== null); // Filter out invalid IDs
+    const userIds = ids
+      .split(",")
+      .map((id) => {
+        if (mongoose.Types.ObjectId.isValid(id)) {
+          return new mongoose.Types.ObjectId(id); // Convert valid IDs to ObjectId
+        }
+        return null; // Mark invalid IDs as null
+      })
+      .filter((id) => id !== null); // Filter out invalid IDs
 
     if (userIds.length === 0) {
       return errorResponse(res, 400, false, "No valid user IDs provided.");
@@ -193,4 +247,3 @@ export const getUsersById = async (req, res) => {
     return errorResponse(res, 500, false, error.message);
   }
 };
-

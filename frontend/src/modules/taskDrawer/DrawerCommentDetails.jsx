@@ -4,12 +4,12 @@ import DeleteCommentModal from "../comment/DeleteCommentModal";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 import { FaPlus } from "react-icons/fa6";
-import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
+import { IoMdArrowDropdown, IoMdArrowDropup, IoMdClose } from "react-icons/io";
+import { LiaEdit } from "react-icons/lia";
+import { MdDeleteOutline } from "react-icons/md";
 
 // eslint-disable-next-line react/prop-types
-const DrawerCommentDetails = ({ user, task }) => {
-  const [comments, setComments] = useState([]);
-  const [users, setUsers] = useState({}); // Track users' details by userId
+const DrawerCommentDetails = ({ user, task, comments, loadingComments }) => {
   const [isDeleteCommentModalOpen, setIsDeleteCommentModalOpen] =
     useState(false);
   const [deleteCommentId, setDeleteCommentId] = useState(null); // Separate ID for delete modal
@@ -26,67 +26,6 @@ const DrawerCommentDetails = ({ user, task }) => {
 
   // Create a reference to the file input
   const fileInputRef = useRef();
-
-  const handleIconClick = () => {
-    fileInputRef.current.click(); // Programmatically trigger the file input
-  };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Optional: Validate file type/size here
-      setData({ ...data, image: file });
-      toast.success("Image attached!");
-    }
-  };
-
-  // Function to fetch comments
-  const fetchComments = async () => {
-    if (!taskId) return;
-    try {
-      const response = await axios.get(
-        `http://localhost:3000/api/v1/comments/all/${taskId}`,
-        {
-          headers: {
-            Authorization: `${JSON.parse(localStorage.getItem("token"))}`,
-          },
-        }
-      );
-      if (response.status === 200 && response.data.success) {
-        setComments(response.data.data);
-        fetchUsers(response.data.data); // Fetch users after getting comments
-      }
-    } catch (error) {
-      console.error("Error fetching comments:", error.message);
-    }
-  };
-
-  // Fetch user details based on comment userId
-  const fetchUsers = async (comments) => {
-    const userIds = comments.map((comment) => comment.userId);
-    try {
-      const response = await axios.get(
-        `http://localhost:3000/api/v1/auth/get-users-id?ids=${userIds.join(
-          ","
-        )}`,
-        {
-          headers: {
-            Authorization: `${JSON.parse(localStorage.getItem("token"))}`,
-          },
-        }
-      );
-      if (response.status === 200 && response.data.success) {
-        const usersMap = response.data.data.reduce((acc, user) => {
-          // eslint-disable-next-line react/prop-types
-          acc[user._id] = user;
-          return acc;
-        }, {});
-        setUsers(usersMap); // Save users details by userId
-      }
-    } catch (error) {
-      console.error("Error fetching users:", error.message);
-    }
-  };
 
   //* Initialize Socket.IO connection
   useEffect(() => {
@@ -106,6 +45,21 @@ const DrawerCommentDetails = ({ user, task }) => {
       socketInstance.disconnect();
     };
   }, []);
+
+  //* Handle icon click to open the file input
+  const handleIconClick = () => {
+    fileInputRef.current.click(); // Programmatically trigger the file input
+  };
+
+  //* Handle file selection
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Optional: Validate file type/size here
+      setData({ ...data, image: file });
+      toast.success("Image attached!");
+    }
+  };
 
   //* Handle form submission to add a comment
   const handleSubmit = async (e) => {
@@ -136,7 +90,6 @@ const DrawerCommentDetails = ({ user, task }) => {
 
       if (response.status === 200 && response.data.success) {
         setData({ text: "", image: null }); // Clear the input fields
-        fetchComments(); // Refresh comments list
         toast.success("Comment added successfully!");
 
         // eslint-disable-next-line react/prop-types
@@ -183,14 +136,8 @@ const DrawerCommentDetails = ({ user, task }) => {
 
       if (response.status === 200 && response.data.success) {
         toast.success("Comment updated successfully!");
-        setComments((prev) =>
-          prev.map((comment) =>
-            comment._id === commentId
-              ? { ...comment, text: editFormData }
-              : comment
-          )
-        );
         setEditingCommentId(null);
+        window.location.reload();
       }
     } catch (error) {
       toast.error("Error updating the comment.");
@@ -204,23 +151,34 @@ const DrawerCommentDetails = ({ user, task }) => {
     setIsDeleteCommentModalOpen(true); // Open the delete modal
   };
 
+  // console.log(comments[4].image)
+
   const renderComments = () => {
-    if (!comments.length) {
+    if (loadingComments) {
+      return (
+        <div className="flex justify-center items-center py-2">
+          <span className="loading loading-spinner text-primary"></span>
+        </div>
+      );
+    }
+
+    // eslint-disable-next-line react/prop-types
+    if (!comments?.length) {
       return <p className="text-sm text-gray-500">No comments yet</p>;
     }
 
-    return comments.map((comment) => {
-      const userDetail = users[comment.userId]; // Get the user details from the `users` state
+    // eslint-disable-next-line react/prop-types
+    return comments?.map((comment) => {
       const isEditing = editingCommentId === comment._id;
 
       return (
         <div
-          key={comment._id}
+          key={comment?._id}
           className={`flex items-start space-x-2 bg-base-200 p-2 rounded-lg
             `}
         >
           <img
-            src={`http://localhost:3000${userDetail?.profilePic}`}
+            src={`http://localhost:3000${comment?.userId?.profilePic}`}
             alt="User Avatar"
             className="w-8 h-8 rounded-full cursor-pointer object-cover"
             onError={(e) => {
@@ -230,9 +188,9 @@ const DrawerCommentDetails = ({ user, task }) => {
           <div className="flex-grow">
             <div>
               <p className="text-sm font-medium">
-                {userDetail?.username}{" "}
+                {comment?.userId?.username}{" "}
                 <span className="text-gray-400 text-xs ml-2">
-                  {new Date(comment.createdAt).toLocaleDateString("en-CA")}
+                  {new Date(comment?.createdAt).toLocaleDateString("en-CA")}
                 </span>
               </p>
 
@@ -252,20 +210,20 @@ const DrawerCommentDetails = ({ user, task }) => {
                     </button>
                     <button
                       className="btn btn-primary btn-sm"
-                      onClick={(e) => handleEditComment(e, comment._id)}
+                      onClick={(e) => handleEditComment(e, comment?._id)}
                     >
                       Save
                     </button>
                   </div>
                 </div>
               ) : (
-                <p className="text-sm">{comment.text}</p>
+                <p className="text-sm">{comment?.text}</p>
               )}
 
               {/* If image exists, display it */}
               {comment.image && (
                 <img
-                  src={`http://localhost:3000${comment.image}`}
+                  src={`http://localhost:3000${comment?.image}`}
                   alt="Comment Image"
                   className="w-full mt-2 rounded-md"
                   onError={(e) => {
@@ -277,8 +235,8 @@ const DrawerCommentDetails = ({ user, task }) => {
           </div>
 
           {/*eslint-disable-next-line react/prop-types */}
-          {!isEditing && user?.data?._id === comment.userId && (
-            <div className="dropdown dropdown-end">
+          {!isEditing && user?.data?._id === comment?.userId?._id && (
+            <div className="dropdown dropdown-left">
               <button tabIndex={0} className="btn btn-ghost btn-xs">
                 ⋮
               </button>
@@ -289,21 +247,23 @@ const DrawerCommentDetails = ({ user, task }) => {
                 <li>
                   <button
                     onClick={() => {
-                      setEditingCommentId(comment._id);
-                      setEditFormData(comment.text);
-                      console.log(comment._id);
+                      setEditingCommentId(comment?._id);
+                      setEditFormData(comment?.text);
+                      console.log(comment?._id);
                     }}
+                    className="flex items-center hover:text-primary"
                   >
-                    Edit
+                    <LiaEdit className="w-4 h-4" /> Edit
                   </button>
                 </li>
                 <li>
                   <button
                     onClick={() => {
-                      openDeleteCommentModal(comment._id);
+                      openDeleteCommentModal(comment?._id);
                     }}
+                    className="flex items-center text-error"
                   >
-                    Delete
+                    <MdDeleteOutline className="w-4 h-4" /> Delete
                   </button>
                 </li>
               </ul>
@@ -313,11 +273,6 @@ const DrawerCommentDetails = ({ user, task }) => {
       );
     });
   };
-
-  useEffect(() => {
-    fetchComments(); // Fetch comments when the component mounts or taskId changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [taskId]);
 
   return (
     <div className="mt-4 me-4">
@@ -351,9 +306,18 @@ const DrawerCommentDetails = ({ user, task }) => {
                 alt="Preview"
                 className="w-20 h-20 object-cover rounded-md mt-2"
               />
-              <p className="text-xs text-gray-500 mt-1 mb-2">
-                {data.image.name}
-              </p>
+
+              <div className="flex gap-1 cursor-pointer mb-1">
+                <p className="text-xs text-gray-500 mt-1 mb-2">
+                  {data.image.name}
+                </p>
+                <div
+                  className="mt-1"
+                  onClick={() => setData({ ...data, image: null })}
+                >
+                  <IoMdClose className=" text-error w-5 h-5 font-bold " />
+                </div>
+              </div>
             </div>
           )}
 
@@ -395,7 +359,6 @@ const DrawerCommentDetails = ({ user, task }) => {
         <DeleteCommentModal
           onClose={() => setIsDeleteCommentModalOpen(false)}
           commentId={deleteCommentId}
-          setComments={setComments}
         />
       )}
     </div>

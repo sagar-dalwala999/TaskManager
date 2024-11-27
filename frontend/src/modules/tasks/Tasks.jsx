@@ -1,13 +1,14 @@
 /* eslint-disable react/prop-types */
 import { useEffect, useMemo, useState } from "react";
+import { IoMdAdd } from "react-icons/io";
+import axios from "axios";
+
 import AddTask from "./AddTask";
 import TasksPagination from "./pagination/TasksPagination";
-import axios from "axios";
 
 const Tasks = ({ onTaskClick, user }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true); // Loading state for tasks
-  const [loadingUsers, setLoadingUsers] = useState(false); // Loading state for user details
   const userRole = user?.data?.role || "user";
   // eslint-disable-next-line no-unused-vars
   const [tasksPerPage, setTasksPerPage] = useState(15);
@@ -23,10 +24,10 @@ const Tasks = ({ onTaskClick, user }) => {
         }/tasks/all?perPage=${tasksPerPage}&pageNo=${currentPage}`
       : `${
           import.meta.env.VITE_API_BASE_URL
-        }/tasks/users-tasks?perPage=${tasksPerPage}&pageNo=${currentPage}`;
+        }/tasks/user-tasks?perPage=${tasksPerPage}&pageNo=${currentPage}`;
   }, [userRole, tasksPerPage, currentPage]);
 
-  // Fetch all tasks
+  //* Fetch all tasks
   useEffect(() => {
     const fetchAllTasks = async () => {
       setLoading(true);
@@ -42,16 +43,6 @@ const Tasks = ({ onTaskClick, user }) => {
           const fetchedTasks = response.data.data?.tasks || [];
           setTasks(fetchedTasks); // Set fetched tasks
           localStorage.setItem("tasks", JSON.stringify(fetchedTasks));
-
-          // Fetch user details immediately after setting tasks
-          const userIds = fetchedTasks
-            .flatMap((task) => task.userId)
-            .filter((id, index, self) => self.indexOf(id) === index)
-            .join(",");
-
-          if (userIds) {
-            await fetchUserDetails(userIds, fetchedTasks);
-          }
         } else {
           setTasks([]);
         }
@@ -67,41 +58,6 @@ const Tasks = ({ onTaskClick, user }) => {
     fetchAllTasks();
   }, [endpoint, tasksPerPage, currentPage]);
 
-  // Fetch user details
-  const fetchUserDetails = async (userIds, fetchedTasks) => {
-    setLoadingUsers(true);
-    try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/auth/get-users-id?ids=${userIds}`,
-        {
-          headers: {
-            Authorization: `${JSON.parse(localStorage.getItem("token"))}`,
-          },
-        }
-      );
-
-      if (response.status === 200 && response.data.success) {
-        const usersMap = response.data.data.reduce((acc, user) => {
-          acc[user._id] = user;
-          return acc;
-        }, {});
-
-        setTasks(
-          fetchedTasks.map((task) => ({
-            ...task,
-            userDetails: Array.isArray(task.userId)
-              ? task.userId.map((id) => usersMap[id])
-              : [usersMap[task.userId]],
-          }))
-        );
-      }
-    } catch (error) {
-      console.error("Error fetching user details:", error.message);
-    } finally {
-      setLoadingUsers(false);
-    }
-  };
-
   const handleAddTask = (newTask) => {
     setTasks((prevTasks) => [newTask, ...prevTasks]);
   };
@@ -113,10 +69,10 @@ const Tasks = ({ onTaskClick, user }) => {
         {userRole === "admin" && (
           <button
             type="button"
-            className="btn btn-primary"
+            className="btn btn-primary flex items-center"
             onClick={() => setIsModalOpen(true)}
           >
-            Add Task
+            <IoMdAdd className="w-6 h-6" /> Add Task
           </button>
         )}
       </div>
@@ -167,11 +123,11 @@ const Tasks = ({ onTaskClick, user }) => {
                     {task.type}
                   </td>
                   <td>
-                    {loadingUsers ? (
+                    {loading ? (
                       <span className="loading loading-spinner text-primary"></span>
                     ) : (
                       <div className="flex items-center flex-wrap gap-2">
-                        {task.userDetails?.slice(0, 5).map((user) => (
+                        {task.userId?.slice(0, 5).map((user) => (
                           <img
                             key={user?._id}
                             src={`${import.meta.env.VITE_BASE_PIC_URL}${
@@ -179,11 +135,14 @@ const Tasks = ({ onTaskClick, user }) => {
                             }`}
                             alt={user?.username}
                             className="w-8 h-8 object-cover rounded-full"
+                            onError={(e) => (
+                              e.target.src = `./avatar.svg`
+                            )}
                           />
                         ))}
-                        {task.userDetails?.length > 5 && (
+                        {task.userId?.length > 5 && (
                           <span className="text-sm text-gray-600">
-                            +{task.userDetails.length - 5}
+                            +{task.userId.length - 5}
                           </span>
                         )}
                       </div>

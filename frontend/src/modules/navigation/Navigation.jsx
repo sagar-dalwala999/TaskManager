@@ -4,19 +4,14 @@ import { IoLogOutOutline, IoNotificationsOutline } from "react-icons/io5";
 import { useEffect, useState } from "react";
 import NotificationModal from "../notification/NotificationModal";
 import { IoIosLogOut } from "react-icons/io";
+import { FaRegUserCircle } from "react-icons/fa";
+import UserProfile from "../auth/user/UserProfile";
 
 const Navigation = ({ user, setTheme, theme, socket }) => {
-  const handleLogout = () => {
-    localStorage.setItem("token", null);
-    localStorage.setItem("userRole", null);
-    localStorage.setItem("tasks", null);
-    localStorage.setItem("persist:root", null);
-    window.location.reload();
-  };
-
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
 
+  //* Fetch notifications
   useEffect(() => {
     if (!user.data?._id || !socket) return; // Guard clause for invalid user data or missing socket
 
@@ -25,7 +20,6 @@ const Navigation = ({ user, setTheme, theme, socket }) => {
 
     // Listen for notifications event
     socket.on("notifications", (notifications) => {
-      console.log("Received notifications:", notifications);
       setNotifications(notifications); // Store the fetched notifications
     });
 
@@ -42,13 +36,16 @@ const Navigation = ({ user, setTheme, theme, socket }) => {
     return () => {
       socket.off("notifications");
       socket.off("notification");
-      console.log("Socket listeners removed");
+      // console.log("Socket listeners removed");
     };
   }, [user.data?._id, socket]); // Ensure user data and socket are available before making socket requests
 
+  //* Handle notifications
   const handleNotifications = () => {
     setIsNotificationOpen(true);
   };
+
+  //* Handle mark as read
   const handleMarkAsRead = (notificationId) => {
     socket.emit("read-notification", {
       userId: user.data._id,
@@ -62,6 +59,17 @@ const Navigation = ({ user, setTheme, theme, socket }) => {
       setNotifications(notifications);
     });
   };
+
+  //* Logout function
+  const handleLogout = () => {
+    localStorage.setItem("token", null);
+    localStorage.setItem("userRole", null);
+    localStorage.setItem("tasks", null);
+    localStorage.setItem("persist:root", null);
+    window.location.reload();
+  };
+
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   return (
     <div className="navbar bg-base-100 z-10">
@@ -128,6 +136,9 @@ const Navigation = ({ user, setTheme, theme, socket }) => {
                           src={`${import.meta.env.VITE_BASE_PIC_URL}${
                             user?.data?.profilePic
                           }`}
+                          onError={(e) => {
+                            e.target.src = "./avatar.png";
+                          }}
                         />
                       )}
                       <img src="./avatar.png" alt={`${user.data.username}`} />
@@ -135,11 +146,19 @@ const Navigation = ({ user, setTheme, theme, socket }) => {
                   </div>
                   <ul
                     tabIndex={0}
-                    className="menu menu-sm dropdown-content bg-primary text-white rounded-box z-[1] mt-1 shadow"
+                    className="flex flex-col divide-y divide-slate-400 items-center menu menu-sm dropdown-content bg-base-300 rounded-box z-[1] shadow"
                   >
                     <li>
+                      <button
+                        className=""
+                        onClick={() => setIsProfileOpen(true)}
+                      >
+                        <FaRegUserCircle className="w-7 h-6 my-1" />
+                      </button>
+                    </li>
+                    <li>
                       <button onClick={handleLogout} className="w-full">
-                        <IoIosLogOut className="w-5 h-5" />
+                        <IoIosLogOut className="w-7 h-6 my-1" />
                       </button>
                     </li>
                   </ul>
@@ -190,8 +209,14 @@ const Navigation = ({ user, setTheme, theme, socket }) => {
           </div>
           <ul
             tabIndex={0}
-            className="menu menu-sm dropdown-content bg-primary text-white rounded-box z-[1] mt-1 shadow"
+            className="flex flex-col divide-y bg-base-300 divide-slate-500 items-center menu menu-sm dropdown-content rounded-box z-[1] mt-1 shadow"
           >
+            <li className="w-full">
+              <button className="" onClick={() => setIsProfileOpen(true)}>
+                <FaRegUserCircle size={20} className="w-5 h-5" />
+                Profile
+              </button>
+            </li>
             <li>
               <button onClick={handleLogout} className="w-full">
                 <IoLogOutOutline size={20} className="w-5 h-5" />
@@ -204,12 +229,19 @@ const Navigation = ({ user, setTheme, theme, socket }) => {
 
       {/* Notification Modal */}
       {isNotificationOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-10 flex justify-center items-center z-50">
           <NotificationModal
             notifications={notifications}
             onClose={() => setIsNotificationOpen(false)}
             handleMarkAsRead={handleMarkAsRead}
           />
+        </div>
+      )}
+
+      {/* Profile Modal */}
+      {isProfileOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <UserProfile onClose={() => setIsProfileOpen(false)} user={user} />
         </div>
       )}
     </div>

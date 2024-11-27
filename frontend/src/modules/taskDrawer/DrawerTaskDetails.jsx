@@ -1,51 +1,14 @@
 /* eslint-disable react/prop-types */
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { LiaEdit } from "react-icons/lia";
+import { MdDeleteOutline } from "react-icons/md";
 
 const DrawerTaskDetails = ({
   task,
   setIsEditModalOpen,
   setIsDeleteModalOpen,
   userRole,
+  loading
 }) => {
-  const [usersDetails, setUsersDetails] = useState([]);
-  const [loadingUsers, setLoadingUsers] = useState(true);
-
-  // Function to fetch user details based on userIds
-  const fetchUserDetails = async (userIds) => {
-    if (!userIds || userIds.length === 0) {
-      setLoadingUsers(false);
-      return;
-    }
-
-    try {
-      const response = await axios.get(
-        `http://localhost:3000/api/v1/auth/get-users-id?ids=${userIds.join(
-          ","
-        )}`,
-        {
-          headers: {
-            Authorization: `${JSON.parse(localStorage.getItem("token"))}`,
-          },
-        }
-      );
-
-      if (response.status === 200 && response.data.success) {
-        setUsersDetails(response.data.data);
-      }
-    } catch (error) {
-      console.log("Error fetching user details:", error.message);
-    } finally {
-      setLoadingUsers(false);
-    }
-  };
-
-  // Fetch user details when the task changes
-  useEffect(() => {
-    if (task?.userId) {
-      fetchUserDetails(task.userId);
-    }
-  }, [task]);
 
   return (
     /* Task Details Container - bg-base-100 */
@@ -68,16 +31,18 @@ const DrawerTaskDetails = ({
                 <button
                   onClick={() => setIsEditModalOpen(true)}
                   disabled={userRole !== "admin"}
+                  className="flex items-center hover:text-primary transition duration-300 ease-in-out"
                 >
-                  Edit
+                  <LiaEdit className="w-4 h-4" /> Edit
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => setIsDeleteModalOpen(true)}
                   disabled={userRole !== "admin"}
+                  className="text-error"
                 >
-                  Delete
+                  <MdDeleteOutline className="w-4 h-4" /> Delete
                 </button>
               </li>
             </ul>
@@ -119,7 +84,7 @@ const DrawerTaskDetails = ({
         <p className="text-sm text-gray-500">
           <span className="font-medium">Assigned to: </span>
         </p>
-        {loadingUsers ? (
+        {loading ? (
           <div className="flex justify-center items-center py-2">
             <span className="loading loading-spinner text-primary"></span>
           </div>
@@ -128,19 +93,22 @@ const DrawerTaskDetails = ({
             className="overflow-y-auto max-h-32 mt-2"
             style={{ maxHeight: "150px" }}
           >
-            {usersDetails.length === 0 ? (
+            {task?.userId.length === 0 ? (
               <p>No assignees available.</p>
             ) : (
-              usersDetails.map((user) => (
-                <div key={user._id} className="flex items-center mb-2 cursor-pointer">
+              task?.userId.map((user) => (
+                <div
+                  key={user?._id}
+                  className="flex items-center mb-2 cursor-pointer"
+                >
                   <img
-                    src={`http://localhost:3000${user.profilePic}`}
-                    alt={user.username}
+                    src={`http://localhost:3000${user?.profilePic}`}
+                    alt={user?.username}
                     className="w-8 h-8 object-cover rounded-full mr-2"
                   />
                   <div>
-                    <p className="font-medium">{user.username}</p>
-                    <p className="text-sm text-gray-500">{user.email}</p>
+                    <p className="font-medium">{user?.username}</p>
+                    <p className="text-sm text-gray-500">{user?.email}</p>
                   </div>
                 </div>
               ))
@@ -151,7 +119,7 @@ const DrawerTaskDetails = ({
 
       <p className="text-sm text-gray-500 mt-4">
         <span className="font-medium">
-          {new Date(task.createdAt).toLocaleDateString("en-US", {
+          {new Date(task?.createdAt).toLocaleDateString("en-US", {
             day: "numeric",
             month: "short",
             year: "numeric",

@@ -3,6 +3,8 @@ import multer from "multer";
 
 import {
   createUser,
+  editProfilePic,
+  editUser,
   getAllUsers,
   getUser,
   getUsersById,
@@ -30,5 +32,13 @@ router.post("/logout", logoutUser);
 router.get("/get-user", authMiddleware, getUser);
 router.get("/get-all", authMiddleware, getAllUsers);
 router.get("/get-users-id", authMiddleware, getUsersById);
+
+router.patch("/edit-user/:id", editUser);
+
+router.patch(
+  "/edit-profile-pic/:id",
+  upload.single("profilePic"),
+  editProfilePic
+);
 
 export default router;

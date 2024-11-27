@@ -1,11 +1,12 @@
 import { Comment } from "../models/comments.model.js";
+import { Task } from "../models/task.model.js";
 import errorResponse from "../utils/ErrorResponse.js";
 import handleResponse from "../utils/handleResponse.js";
 
 export const createComment = async (req, res) => {
   try {
     const { text } = req.body;
-    const { taskId,userId } = req.params;
+    const { taskId, userId } = req.params;
 
     if (!userId || !taskId || (!text && !req.file)) {
       return errorResponse(
@@ -29,11 +30,18 @@ export const createComment = async (req, res) => {
       taskId,
     });
 
+    // Update the Task model to include the new comment ID
+    await Task.findByIdAndUpdate(
+      taskId,
+      { $push: { commentsId: comment._id } }, // Push the comment ID to the commentsId array
+      { new: true, useFindAndModify: false } // Return the updated document
+    );
+
     return handleResponse(
       res,
       200,
       true,
-      "Comment created successfully.",
+      "Comment created successfully and added to task.",
       comment
     );
   } catch (error) {

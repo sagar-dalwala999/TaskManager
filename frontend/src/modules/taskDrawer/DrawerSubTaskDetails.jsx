@@ -1,7 +1,9 @@
 /* eslint-disable react/prop-types */
-import { useState, useEffect } from "react";
-import axios from "axios";
+import { useState } from "react";
 import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
+import { LiaEdit } from "react-icons/lia";
+import { MdDeleteOutline } from "react-icons/md";
+import { IoMdAdd } from "react-icons/io";
 
 const DrawerSubTaskDetails = ({
   onSubTaskClick,
@@ -10,42 +12,10 @@ const DrawerSubTaskDetails = ({
   setIsSubTaskModalOpen,
   setSelectedSubTask,
   userRole,
-  task,
+  loading,
+  subtasks,
 }) => {
-  const [subtasks, setSubtasks] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(true); // State for dropdown toggle
-
-  const taskId = task?._id; // Get taskId from the task object
-
-  // Fetch subtasks for the given taskId
-  const fetchSubtasks = async () => {
-    if (!taskId) return;
-
-    try {
-      const response = await axios.get(
-        `http://localhost:3000/api/v1/tasks/subtasks/${taskId}`,
-        {
-          headers: {
-            Authorization: `${JSON.parse(localStorage.getItem("token"))}`,
-          },
-        }
-      );
-
-      if (response.status === 200 && response.data.success) {
-        setSubtasks(response.data.data); // Store the subtasks in the state
-      }
-    } catch (error) {
-      console.error("Error fetching subtasks:", error.message);
-    } finally {
-      setLoading(false); // Stop loading
-    }
-  };
-
-  useEffect(() => {
-    fetchSubtasks(); // Fetch subtasks when the component mounts or taskId changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [taskId]);
 
   const renderSubtasks = () => {
     if (loading) {
@@ -56,13 +26,13 @@ const DrawerSubTaskDetails = ({
       );
     }
 
-    if (subtasks.length === 0) {
+    if (subtasks?.length === 0) {
       return (
         <p className="text-sm text-gray-500 py-4 ps-4">No subtasks available</p>
       );
     }
 
-    return subtasks.map((subtask, index) => (
+    return subtasks?.map((subtask, index) => (
       <li
         key={subtask.id || index}
         className="bg-base-200 p-2 rounded-lg cursor-pointer"
@@ -79,7 +49,7 @@ const DrawerSubTaskDetails = ({
 
           {userRole === "admin" && (
             <div
-              className="dropdown dropdown-end"
+              className="dropdown dropdown-left"
               onClick={(e) => e.stopPropagation()} // Prevent triggering `onSubTaskClick`
             >
               <button tabIndex={0} className="btn btn-ghost btn-xs">
@@ -95,8 +65,9 @@ const DrawerSubTaskDetails = ({
                       setIsEditModalOpen(true);
                       setSelectedSubTask(subtask);
                     }}
+                    className="flex items-center hover:text-primary"
                   >
-                    Edit
+                    <LiaEdit className="w-4 h-4" /> Edit
                   </button>
                 </li>
                 <li>
@@ -105,8 +76,9 @@ const DrawerSubTaskDetails = ({
                       setIsDeleteModalOpen(true);
                       setSelectedSubTask(subtask);
                     }}
+                    className="flex items-center text-error"
                   >
-                    Delete
+                    <MdDeleteOutline className="w-4 h-4" /> Delete
                   </button>
                 </li>
               </ul>
@@ -126,7 +98,7 @@ const DrawerSubTaskDetails = ({
       >
         <h3
           className="text-md flex items-center cursor-pointer font-semibold tooltip tooltip-left"
-          data-tip="Subtasks Details"
+          data-tip="Subtasks"
         >
           {isExpanded ? (
             <IoMdArrowDropup className="w-6 h-6" />
@@ -137,20 +109,20 @@ const DrawerSubTaskDetails = ({
         </h3>
         {userRole === "admin" && (
           <button
-            className="btn btn-primary btn-sm"
+            className="btn btn-primary btn-sm flex items-center"
             onClick={(e) => {
               e.stopPropagation();
               setIsSubTaskModalOpen(true);
             }}
           >
-            Add Subtask
+            <IoMdAdd className="w-5 h-5" /> Add
           </button>
         )}
       </div>
 
       {/* Collapsible Subtasks List */}
       {isExpanded && (
-        <div className="bg-base-200 rounded-lg overflow-y-auto pr-3 max-h-60">
+        <div className={`bg-base-200 rounded-lg overflow-y-auto pr-3 max-h-60`}>
           <ul className="space-y-2">{renderSubtasks()}</ul>
         </div>
       )}

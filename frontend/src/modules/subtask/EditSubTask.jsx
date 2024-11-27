@@ -1,11 +1,11 @@
 /* eslint-disable react/prop-types */
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 
 import TaskModal from "../tasks/TaskModal";
 
-const EditSubTask = ({ setIsModalOpen, subtask, onClose,task }) => {
+const EditSubTask = ({ setIsModalOpen, subtask, onClose, userOptions }) => {
   // Local state for form data
   const [formData, setFormData] = useState({
     title: subtask?.title || "",
@@ -14,41 +14,6 @@ const EditSubTask = ({ setIsModalOpen, subtask, onClose,task }) => {
     type: subtask?.type || "Normal",
     users: subtask?.userId || [], // Array of user IDs
   });
-
-  const [userOptions, setUserOptions] = useState([]); // State for user options
-
-  // Function to fetch user details based on userIds
-  const fetchUserDetails = async (userIds) => {
-    try {
-      const response = await axios.get(
-        `http://localhost:3000/api/v1/auth/get-users-id?ids=${userIds.join(
-          ","
-        )}`,
-        {
-          headers: {
-            Authorization: `${JSON.parse(localStorage.getItem("token"))}`,
-          },
-        }
-      );
-
-      if (response.status === 200 && response.data.success) {
-        const options = response.data.data.map((user) => ({
-          value: user._id,
-          label: user.username,
-        }));
-        setUserOptions(options);
-      }
-    } catch (error) {
-      console.log("Error fetching user details:", error.message);
-    }
-  };
-
-  // Fetch user details when the task changes
-  useEffect(() => {
-    if (task?.userId) {
-      fetchUserDetails(task.userId);
-    }
-  }, [task]);
 
   const handleEditSubTaskSubmit = async () => {
     const updatedFormData = {

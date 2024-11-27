@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MdClose } from "react-icons/md";
 
 import DrawerSubTaskDetails from "./DrawerSubTaskDetails";
@@ -11,7 +11,8 @@ import DrawerTaskDetails from "./DrawerTaskDetails";
 import EditTask from "../tasks/EditTask";
 import DeleteTask from "../tasks/DeleteTask";
 import AddSubTask from "../subtask/AddSubTask";
-
+import toast from "react-hot-toast";
+import axios from "axios";
 
 // eslint-disable-next-line react/prop-types
 const TasksDrawer = ({ closeDrawer, task, user }) => {
@@ -29,33 +30,85 @@ const TasksDrawer = ({ closeDrawer, task, user }) => {
     useState(false);
 
   const [selectedSubTask, setSelectedSubTask] = useState(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false); // New state to manage drawer visibility
 
-  const [isDrawerOpen, setIsDrawerOpen] = useState(true); // New state to manage drawer visibility
+  //* Manage drawer visibility for smooth transitions
+  useEffect(() => {
+    // Delay opening animation slightly after component mounts
+    const timer = setTimeout(() => setIsDrawerOpen(true), 50);
+    return () => clearTimeout(timer); // Clean up timeout on unmount
+  }, []);
 
+  //* open subtask
   const openSubTask = (subtask) => {
     setCurrentView({ type: "subtask", data: subtask });
     setSelectedSubTask(subtask);
   };
 
+  //* go back to task
   const goBackToTask = () => {
     setCurrentView({ type: "task", data: task });
   };
 
+  //* close drawer
   const handleCloseDrawer = () => {
-    setIsDrawerOpen(false); // Close the drawer when called
-    closeDrawer(); // Optional: if you need to trigger a parent function
+    setIsDrawerOpen(false); // Start closing animation
+    setTimeout(() => {
+      closeDrawer();
+    }, 100); // Notify parent after animation completes
+  };
+  const [loading, setLoading] = useState(false);
+
+  const [taskData, setTaskData] = useState(null);
+  const [subTaskData, setSubTaskData] = useState(null);
+  const [commentData, setCommentData] = useState(null);
+
+  const fetchTasksWithUsersAndSubTasksAndComments = async () => {
+    try {
+      setLoading(true);
+
+      const response = await axios.get(
+        // eslint-disable-next-line react/prop-types
+        `${import.meta.env.VITE_API_BASE_URL}/tasks/populate/${task?._id}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `${JSON.parse(localStorage.getItem("token"))}`,
+          },
+        }
+      );
+
+      if (response.status === 200 && response.data.success) {
+        setTaskData(response.data.data.task);
+        setSubTaskData(response.data.data.subtasks);
+        setCommentData(response.data.data.task.commentsId);
+      }
+    } catch (error) {
+      console.log("Error in fetching tasks: ", error.message);
+      toast.error("Internal Server Error");
+      setLoading(false);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // const [subtasks, setSubtasks] = useState([]);
+  useEffect(() => {
+    fetchTasksWithUsersAndSubTasksAndComments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Callback function to update subtasks in the parent state
-  // const updateSubtasks = (updatedSubtask) => {
-  //   setSubtasks((prevSubtasks) =>
-  //     prevSubtasks.map((subtask) =>
-  //       subtask._id === updatedSubtask._id ? updatedSubtask : subtask
-  //     )
-  //   );
-  // };
+  const [userOptions, setUserOptions] = useState([]); // State for user options
+
+  useEffect(() => {
+    const options = taskData?.userId.map((user) => ({
+      // eslint-disable-next-line react/prop-types
+      value: user._id,
+      // eslint-disable-next-line react/prop-types
+      label: user.email,
+    }));
+
+    setUserOptions(options);
+  }, [taskData]);
 
   return (
     <div className="drawer drawer-end z-10">
@@ -74,7 +127,7 @@ const TasksDrawer = ({ closeDrawer, task, user }) => {
         ></label>
 
         <div
-          className={`menu bg-base-200 text-base-content min-h-full w-full lg:w-1/3 p-4 grid grid-rows-[auto,1fr,auto] gap-4 transition-transform duration-300 ease-in-out ${
+          className={`menu bg-base-200 text-base-content min-h-full w-full lg:w-2/5 p-4 grid grid-rows-[auto,1fr,auto] gap-4 shadow transition-transform duration-100 ease-in-out ${
             isDrawerOpen ? "translate-x-0" : "translate-x-full"
           } `}
         >
@@ -83,7 +136,7 @@ const TasksDrawer = ({ closeDrawer, task, user }) => {
               {currentView.type === "task" ? "Task Details" : "Subtask Details"}
             </h3>
             <button
-              className="btn btn-ghost btn-sm"
+              className="btn btn-ghost btn-sm me-2"
               onClick={handleCloseDrawer}
             >
               <MdClose size={20} />
@@ -94,7 +147,7 @@ const TasksDrawer = ({ closeDrawer, task, user }) => {
             <>
               <div className="space-y-4 mb-4">
                 <DrawerTaskDetails
-                  task={task}
+                  task={taskData}
                   setIsEditModalOpen={setIsEditModalOpen}
                   setIsDeleteModalOpen={setIsDeleteModalOpen}
                   userRole={userRole}
@@ -107,14 +160,20 @@ const TasksDrawer = ({ closeDrawer, task, user }) => {
                   setIsDeleteModalOpen={setIsDeleteSubTaskModalOpen}
                   setSelectedSubTask={setSelectedSubTask}
                   userRole={userRole}
-                  task={task}
+                  subtasks={subTaskData}
+                  loading={loading}
                   // subtasks={subtasks}
                   // setSubtasks={setSubtasks}
                   // updateSubtasks={updateSubtasks}
                 />
               </div>
 
-              <DrawerCommentDetails user={user} task={task} />
+              <DrawerCommentDetails
+                user={user}
+                task={task}
+                comments={commentData}
+                loadingComments={loading}
+              />
             </>
           ) : (
             <>
@@ -155,6 +214,7 @@ const TasksDrawer = ({ closeDrawer, task, user }) => {
           setIsModalOpen={setIsSubTaskModalOpen}
           task={task}
           onClose={() => setIsSubTaskModalOpen(false)}
+          userOptions={userOptions}
           // updateSubtasks={updateSubtasks}  // Pass callback to update subtasks
         />
       )}
@@ -165,6 +225,7 @@ const TasksDrawer = ({ closeDrawer, task, user }) => {
           subtask={selectedSubTask}
           onClose={() => setIsEditSubTaskModalOpen(false)}
           task={task}
+          userOptions={userOptions}
           // updateSubtasks={updateSubtasks} // Pass the updateSubtasks function here
         />
       )}

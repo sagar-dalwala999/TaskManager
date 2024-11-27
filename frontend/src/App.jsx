@@ -54,7 +54,7 @@ function App() {
             }
           />
         </Routes>
-      </Router> 
+      </Router>
       <Toaster />
     </>
   );

@@ -2,7 +2,7 @@ import toast from "react-hot-toast";
 import axios from "axios";
 
 /* eslint-disable react/prop-types */
-const DeleteCommentModal = ({ onClose, commentId, setComments }) => {
+const DeleteCommentModal = ({ onClose, commentId }) => {
   console.log(commentId);
   const handleDelete = async () => {
     try {
@@ -17,9 +17,10 @@ const DeleteCommentModal = ({ onClose, commentId, setComments }) => {
 
       if (response.status === 200 && response.data.success) {
         // Update the comments state by filtering out the deleted comment
-        setComments((prevComments) =>
-          prevComments.filter((comment) => comment._id !== commentId)
-        );
+        // setComments((prevComments) =>
+        //   prevComments.filter((comment) => comment._id !== commentId)
+        // );
+        window.location.reload();
         toast.success("Comment deleted successfully!");
         onClose(); // Close the modal after deletion
       }

@@ -14,43 +14,6 @@ const EditTask = ({ setIsModalOpen, task, onClose }) => {
     users: [], // Initialize empty array for user options
   });
 
-  // const [userOptions, setUserOptions] = useState([]); // State for user options
-
-  // Fetch users from API
-  useEffect(() => {
-    const fetchAllUsers = async () => {
-      try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/auth/get-all`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `${JSON.parse(localStorage.getItem("token"))}`,
-            },
-          }
-        );
-
-        if (response?.status === 200) {
-          const options = response.data.data.map((user) => ({
-            value: user._id,
-            label: user.email,
-          }));
-          // setUserOptions(options); // Set user options
-          setFormData((prev) => ({
-            ...prev,
-            users:
-              task?.userId?.map((id) =>
-                options.find((option) => option.value === id)
-              ) || [], // Map task user IDs to options
-          }));
-        }
-      } catch (error) {
-        console.error("Error fetching users:", error.message);
-        toast.error("Failed to fetch users.");
-      }
-    };
-    fetchAllUsers();
-  }, [task?.userId]);
 
   const [socket, setSocket] = useState(null);
 
@@ -115,7 +78,6 @@ const EditTask = ({ setIsModalOpen, task, onClose }) => {
       setFormData={setFormData}
       handleSubmit={handleEditTaskSubmit}
       onClose={onClose}
-      // userOptions={userOptions} // Pass user options to the modal
     />
   );
 };

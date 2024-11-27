@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import TaskModal from "../tasks/TaskModal";
 
 // eslint-disable-next-line react/prop-types
-const AddSubTask = ({ setIsModalOpen, task }) => {
+const AddSubTask = ({ setIsModalOpen, task, userOptions }) => {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -14,8 +14,6 @@ const AddSubTask = ({ setIsModalOpen, task }) => {
     type: "Normal",
     users: [],
   });
-
-  const [userOptions, setUserOptions] = useState([]); // State for user options
 
   const [socket, setSocket] = useState(null);
 
@@ -37,43 +35,6 @@ const AddSubTask = ({ setIsModalOpen, task }) => {
       socketInstance.disconnect();
     };
   }, []);
-
-  // Function to fetch user details based on userIds
-  const fetchUserDetails = async (userIds) => {
-    try {
-      const response = await axios.get(
-        `http://localhost:3000/api/v1/auth/get-users-id?ids=${userIds.join(
-          ","
-        )}`,
-        {
-          headers: {
-            Authorization: `${JSON.parse(localStorage.getItem("token"))}`,
-          },
-        }
-      );
-
-      if (response.status === 200 && response.data.success) {
-        const options = response.data.data.map((user) => ({
-          value: user._id,
-          label: user.username,
-        }))
-        setUserOptions(options);
-      }
-    } catch (error) {
-      console.log("Error fetching user details:", error.message);
-    }
-  };
-
-  // Fetch user details when the task changes
-  useEffect(() => {
-    // eslint-disable-next-line react/prop-types
-    if (task?.userId) {
-      // eslint-disable-next-line react/prop-types
-      fetchUserDetails(task.userId);
-    }
-  }, [task]);
-
-  console.log(userOptions)
 
   const handleAddSubTaskSubmit = async () => {
     if (
