@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    /* Default light theme variables */
+    --tw-select-bg: var(--b1);
+    --tw-select-border: var(--b2);
+    --tw-select-text: var(--bc);
+    --tw-select-hover-bg: var(--p);
+    --tw-select-hover-text: var(--pc);
+  }
+  
+  [data-theme="light"] {
+    /* Light theme overrides */
+    --tw-select-bg: #ffffff; /* Background for dropdown */
+    --tw-select-border: #d1d5db; /* Light border */
+    --tw-select-text: #111827; /* Light text */
+    --tw-select-hover-bg: #e5e7eb; /* Light hover background */
+    --tw-select-hover-text: #000000; /* Light hover text */
+  }
+  
+  [data-theme="dark"] {
+    /* Dark theme overrides */
+    --tw-select-bg: #1D232A; /* Background for dropdown */
+    --tw-select-border: #4a5568; /* Dark border */
+    --tw-select-text: #aaafb3; /* Dark text */
+    --tw-select-hover-bg: #363c46; /* Dark hover background */
+    --tw-select-hover-text: #bfc2c6; /* Dark hover text */
+  }
+  

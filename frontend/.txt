@@ -1,0 +1,182 @@
+- for mobile screen notification the drawer menu is open after notification is close so that need to be change
+-
+To fetch and display the recursive structure of tasks, subtasks, and related data in React, you can use the following approach:
+
+---
+
+### **Frontend Implementation in React**
+
+#### 1. **Create a Function to Fetch the Data**
+Use `fetch` or `axios` to call your backend API.
+
+```javascript
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+
+const TaskDetails = ({ taskId }) => {
+  const [taskData, setTaskData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch task data by ID
+  const fetchTaskData = async (id) => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`/api/tasks/${id}`); // Replace with your API endpoint
+      setTaskData(response.data.data); // Assuming your API returns { success, data }
+    } catch (err) {
+      setError(err.message || "Failed to fetch task data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (taskId) {
+      fetchTaskData(taskId);
+    }
+  }, [taskId]);
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error}</p>;
+
+  return (
+    <div>
+      <h1>Task Details</h1>
+      {taskData && <TaskItem task={taskData.task} />}
+      {taskData && taskData.subtasks.length > 0 && (
+        <div>
+          <h2>Subtasks</h2>
+          {taskData.subtasks.map((subtask) => (
+            <TaskItem key={subtask._id} task={subtask} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+```
+
+---
+
+#### 2. **Recursive Task Component**
+Create a reusable component to display tasks and their subtasks.
+
+```javascript
+const TaskItem = ({ task }) => {
+  return (
+    <div style={{ marginLeft: "20px", border: "1px solid #ccc", padding: "10px" }}>
+      <h3>{task.title}</h3>
+      <p>{task.description}</p>
+      <p>Status: {task.status}</p>
+      <p>Type: {task.type}</p>
+      <p>Created by: {task.userId.map((user) => user.name).join(", ")}</p>
+
+      {task.commentsId.length > 0 && (
+        <div>
+          <h4>Comments:</h4>
+          {task.commentsId.map((comment) => (
+            <div key={comment._id} style={{ marginLeft: "10px" }}>
+              <p>{comment.text}</p>
+              <small>By: {comment.userId.name}</small>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {task.subTasksId && (
+        <div>
+          <h4>Subtasks:</h4>
+          {task.subTasksId.map((subtask) => (
+            <TaskItem key={subtask._id} task={subtask} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+```
+
+---
+
+#### 3. **API Example**
+Here’s how the backend API response is structured and used:
+
+**Response Example:**
+```json
+{
+  "success": true,
+  "data": {
+    "task": {
+      "_id": "mainTaskId",
+      "title": "Main Task",
+      "description": "Main task description",
+      "status": "Pending",
+      "type": "Important",
+      "userId": [
+        { "_id": "userId1", "name": "John Doe" }
+      ],
+      "subTasksId": [
+        {
+          "_id": "subTaskId1",
+          "title": "Subtask 1",
+          "description": "Subtask description",
+          "status": "Ongoing",
+          "type": "Normal",
+          "userId": [
+            { "_id": "userId2", "name": "Jane Doe" }
+          ],
+          "commentsId": [],
+          "subTasksId": []
+        }
+      ],
+      "commentsId": [
+        {
+          "_id": "commentId1",
+          "text": "Great task!",
+          "userId": { "_id": "userId1", "name": "John Doe" }
+        }
+      ]
+    },
+    "subtasks": [] // Subtasks fetched separately
+  }
+}
+```
+
+---
+
+#### 4. **Handling Recursion**
+The `TaskItem` component calls itself for every level of subtasks. This works seamlessly because:
+1. Each task (or subtask) contains its own `subTasksId` array.
+2. If `subTasksId` is populated, the component will render subtasks recursively.
+
+---
+
+#### 5. **Rendering in the Parent Component**
+Pass the `taskId` as a prop to `TaskDetails`:
+
+```javascript
+const App = () => {
+  return (
+    <div>
+      <TaskDetails taskId="mainTaskId" />
+    </div>
+  );
+};
+
+export default App;
+```
+
+---
+
+### Key Points:
+1. **Recursive Rendering**:
+   - The `TaskItem` component handles the nested structure automatically, rendering subtasks, users, and comments.
+
+2. **Lazy Loading**:
+   - If subtasks or comments grow large, consider fetching these lazily (on expand or scroll).
+
+3. **Error Handling**:
+   - The `TaskDetails` component shows appropriate messages if fetching fails or takes time.
+
+This approach efficiently handles recursion and displays tasks and their related data dynamically. Let me know if you need further refinements!
